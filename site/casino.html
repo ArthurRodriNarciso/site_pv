@@ -1,0 +1,216 @@
+<html><head><base href="https://casinoreality.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Reality - Jogo de Apostas com Limite</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+  }
+  .casino {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+  h1 {
+    color: #ffd700;
+    text-shadow: 0 0 5px #ffd700;
+  }
+  .slot-machine {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .reel {
+    background: #000;
+    border: 2px solid #ffd700;
+    border-radius: 5px;
+    font-size: 40px;
+    padding: 10px;
+    margin: 0 5px;
+    min-width: 60px;
+  }
+  button {
+    background: #ffd700;
+    border: none;
+    color: #1a1a2e;
+    padding: 10px 20px;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px;
+  }
+  button:hover {
+    background: #ffec8b;
+    transform: scale(1.05);
+  }
+  button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+  }
+  #balance, #limit {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+  @keyframes spin {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(360deg); }
+  }
+  #rechargeAmount {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+    margin-right: 10px;
+  }
+  .warning {
+    color: #ff4136;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="casino">
+    <h1>Casino Reality</h1>
+    <div class="slot-machine">
+      <div class="reel" id="reel1">?</div>
+      <div class="reel" id="reel2">?</div>
+      <div class="reel" id="reel3">?</div>
+    </div>
+    <button id="spinButton">Girar (Custo: $10)</button>
+    <div id="balance">Saldo: $100</div>
+    <div id="limit">Limite: $500</div>
+    <div style="margin-top: 20px;">
+      <input type="number" id="rechargeAmount" placeholder="Valor para recarregar" min="1">
+      <button id="rechargeButton">Recarregar</button>
+    </div>
+    <div id="warningMessage" class="warning"></div>
+  </div>
+
+<script>
+const symbols = ['🍒', '🍋', '🍊', '🍇', '💎', '7️⃣'];
+let balance = 100;
+const spinCost = 10;
+const balanceLimit = 500;
+
+const reel1 = document.getElementById('reel1');
+const reel2 = document.getElementById('reel2');
+const reel3 = document.getElementById('reel3');
+const spinButton = document.getElementById('spinButton');
+const balanceDisplay = document.getElementById('balance');
+const limitDisplay = document.getElementById('limit');
+const rechargeButton = document.getElementById('rechargeButton');
+const rechargeAmountInput = document.getElementById('rechargeAmount');
+const warningMessage = document.getElementById('warningMessage');
+
+spinButton.addEventListener('click', spin);
+rechargeButton.addEventListener('click', recharge);
+
+function spin() {
+  if (balance < spinCost) {
+    alert('Saldo insuficiente!');
+    return;
+  }
+
+  balance -= spinCost;
+  updateBalance();
+
+  spinButton.disabled = true;
+  
+  const results = [];
+  [reel1, reel2, reel3].forEach((reel, index) => {
+    reel.style.animation = 'spin 0.5s linear infinite';
+    setTimeout(() => {
+      reel.style.animation = '';
+      const symbol = getRandomSymbol();
+      reel.textContent = symbol;
+      results.push(symbol);
+      if (index === 2) {
+        checkWin(results);
+      }
+    }, (index + 1) * 1000);
+  });
+}
+
+function getRandomSymbol() {
+  return symbols[Math.floor(Math.random() * symbols.length)];
+}
+
+function checkWin(results) {
+  let winAmount = 0;
+  if (results[0] === results[1] && results[1] === results[2]) {
+    switch (results[0]) {
+      case '💎': winAmount = 1000; break;
+      case '7️⃣': winAmount = 500; break;
+      case '🍇': winAmount = 200; break;
+      case '🍊': winAmount = 100; break;
+      case '🍋': winAmount = 50; break;
+      case '🍒': winAmount = 25; break;
+    }
+  }
+
+  if (winAmount > 0) {
+    const potentialBalance = balance + winAmount;
+    if (potentialBalance > balanceLimit) {
+      winAmount = balanceLimit - balance;
+      warningMessage.textContent = `Você atingiu o limite! Ganho ajustado para $${winAmount}.`;
+    } else {
+      warningMessage.textContent = '';
+    }
+    balance += winAmount;
+    alert(`Parabéns! Você ganhou $${winAmount}!`);
+  } else {
+    warningMessage.textContent = '';
+  }
+
+  updateBalance();
+  spinButton.disabled = false;
+}
+
+function updateBalance() {
+  balanceDisplay.textContent = `Saldo: $${balance}`;
+  limitDisplay.textContent = `Limite: $${balanceLimit}`;
+  if (balance >= balanceLimit) {
+    spinButton.disabled = true;
+    warningMessage.textContent = 'Você atingiu o limite máximo de saldo!';
+  } else {
+    spinButton.disabled = false;
+  }
+}
+
+function recharge() {
+  const amount = parseInt(rechargeAmountInput.value);
+  if (isNaN(amount) || amount <= 0) {
+    alert('Por favor, insira um valor válido para recarregar.');
+    return;
+  }
+
+  const potentialBalance = balance + amount;
+  if (potentialBalance > balanceLimit) {
+    const maxRecharge = balanceLimit - balance;
+    balance = balanceLimit;
+    warningMessage.textContent = `Limite atingido. Recarregado apenas $${maxRecharge}.`;
+  } else {
+    balance += amount;
+    warningMessage.textContent = '';
+  }
+
+  updateBalance();
+  rechargeAmountInput.value = '';
+  alert(`Sua conta foi recarregada. Novo saldo: $${balance}`);
+}
+
+updateBalance();
+</script>
+</body></html>
